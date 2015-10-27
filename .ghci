@@ -1,0 +1,6 @@
+:set -XNoImplicitPrelude
+:set -optP-include -optPdist/build/autogen/cabal_macros.h
+:set -idist/build/autogen
+:set -isrc
+:set -itest
+:set -Wall

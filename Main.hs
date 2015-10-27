@@ -9,8 +9,8 @@ import           Control.Monad
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import           DeepLink
-import           FilePath (FilePath)
 import           Options.Applicative
+import           System.FilePath.ByteString (FilePath)
 import qualified System.Posix.ByteString as Posix
 import           System.Process (callProcess)
 

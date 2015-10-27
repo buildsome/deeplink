@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module FilePath
+module System.FilePath.ByteString
   ( FilePath
   , isAbsolute
   , splitFileName

@@ -12,9 +12,9 @@ import           Data.Elf (ElfSection(..), Elf(..), parseElf)
 import           Data.List (sortBy)
 import           Data.Ord (comparing)
 import           Data.Typeable (Typeable)
-import qualified FilePath
-import           FilePath (FilePath, (</>))
 import qualified OrderedSet as OSet
+import           System.FilePath.ByteString (FilePath, (</>))
+import qualified System.FilePath.ByteString as FilePath
 import           System.IO.Error
 import           System.IO.Posix.MMap (unsafeMMapFile)
 

@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 Library
   ghc-options:         -O2 -Wall
-  exposed-modules:     FilePath, DeepLink
+  exposed-modules:     System.FilePath.ByteString, DeepLink
   other-modules:       OrderedSet
   default-extensions:  NoImplicitPrelude
   other-extensions:    OverloadedStrings

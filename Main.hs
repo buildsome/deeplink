@@ -30,12 +30,21 @@ bytestr :: ReadM ByteString
 bytestr = liftM BS8.pack $ str
 #endif
 
+desc :: String
+desc =
+    unlines
+    [ "Recursively scans for dependencies in .o files (specified via "
+    , "DEEPLINK__ADD_* macros in a C compilation) from a specified root set "
+    , "of .o files.  Gives the result to a specified command (e.g: \"ld\" or "
+    , "\"echo\")."
+    ]
+
 getOpts :: IO Opts
 getOpts =
   execParser $
   info (helper <*> parser) $
   fullDesc
-  <> progDesc "Deeply link a target."
+  <> progDesc desc
   <> header "deeplink - deeply link a target"
   where
     parser =
@@ -43,7 +52,7 @@ getOpts =
       <$> strOption
           (long "ld" <> help "ld command to use" <>
            metavar "ld-command")
-      <*> many (argument bytestr (metavar "opaths"))
+      <*> some (argument bytestr (metavar "opaths" <> help "At least one root .o path"))
       <*> switch (long "verbose" <> short 'v' <> help "Verbose mode")
 
 main :: IO ()

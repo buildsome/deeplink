@@ -10,7 +10,7 @@ maintainer:          eyal.lotem@elastifile.com
 -- copyright:
 category:            Development
 build-type:          Custom
-extra-source-files:  README.md include/*.h
+extra-source-files:  README.md include/*.h stack.yaml
 cabal-version:       >=1.10
 
 Library

@@ -1,3 +1,4 @@
 /dist
+/.stack-work
 *.i_hi
 *.i_o

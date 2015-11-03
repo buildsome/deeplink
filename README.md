@@ -122,3 +122,12 @@ linker. See `deeplink.h` for an example.
 The entire `deeplink` section is only used during build, and can
 be stripped from the resulting executable/library.
 
+# Credits
+
+See also: [Credits file](CREDITS.md).
+
+[@sinelaw](https://github.com/sinelaw) (Noam Lewis) - Big thanks for contributing the excellent
+README, other documentation and fixing build issues.
+
+[@da-x](https://github.com/da-x) (Dan Aloni) - Thanks for helping with RPM packaging and better
+error messages.

@@ -14,18 +14,6 @@ BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 # This can be rectified in the future.
 
 BuildRequires:  gmp-devel
-
-# BuildRequires:  deeplink-deps
-# BuildRequires:  ghc-Cabal
-# BuildRequires:  cabal-install
-
-# BuildRequires:  ghc-Cabal-devel
-# BuildRequires:  ghc-transformers-devel
-# BuildRequires:  ghc-mtl-devel
-# BuildRequires:  ghc-text-devel
-# BuildRequires:  ghc-random-devel
-# BuildRequires:  ghc-template-haskell-devel
-
 Requires:       gmp
 
 %description

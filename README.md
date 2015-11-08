@@ -126,8 +126,10 @@ be stripped from the resulting executable/library.
 
 See also: [Credits file](CREDITS.md).
 
-[@sinelaw](https://github.com/sinelaw) (Noam Lewis) - Big thanks for contributing the excellent
-README, other documentation and fixing build issues.
+[@sinelaw](https://github.com/sinelaw) (Noam Lewis) - Big thanks for
+contributing the excellent README, other documentation and fixing
+build issues.
 
-[@da-x](https://github.com/da-x) (Dan Aloni) - Thanks for helping with RPM packaging and better
-error messages.
+[@da-x](https://github.com/da-x) (Dan Aloni) - Big thanks for helping
+to come up with and refine the original idea.  Also for the packaging
+help and better error messages :-)

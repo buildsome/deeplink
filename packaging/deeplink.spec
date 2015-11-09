@@ -20,6 +20,8 @@ Requires:       gmp
 Deeplink is an innovative build system, meant to both ease the
 declaration of the build steps, and give better guarantees to users.
 
+%global debug_package %{nil}
+
 %prep
 %setup -q
 

@@ -27,7 +27,7 @@ bytestr :: Monad m => String -> m ByteString
 bytestr = liftM BS8.pack . str
 #else
 bytestr :: ReadM ByteString
-bytestr = liftM BS8.pack $ str
+bytestr = liftM BS8.pack str
 #endif
 
 desc :: String

@@ -133,3 +133,6 @@ build issues.
 [@da-x](https://github.com/da-x) (Dan Aloni) - Big thanks for helping
 to come up with and refine the original idea.  Also for the packaging
 help and better error messages :-)
+
+[@nadavshemer](https://github.com/nadavshemer) (Nadav Shemer) - Thanks
+for the prune support!

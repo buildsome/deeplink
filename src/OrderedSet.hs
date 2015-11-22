@@ -3,6 +3,7 @@ module OrderedSet
     , empty
     , maybeAppend, tryAppend
     , toList
+    , toSet
     , isMember
     ) where
 
@@ -31,6 +32,9 @@ tryAppend x s = fromMaybe s (maybeAppend x s)
 
 toList :: OrderedSet a -> [a]
 toList (OrderedSet _ l) = reverse l
+
+toSet :: OrderedSet a -> Set a
+toSet (OrderedSet s _) = s
 
 isMember :: Ord a => a -> OrderedSet a -> Bool
 isMember x (OrderedSet s _) = Set.member x s

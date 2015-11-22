@@ -1,5 +1,5 @@
 name:                deeplink
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Automatically link C projects via macro invocations in source files
 description:         For a full description, read deeplink's README.md
 homepage:            https://github.com/ElastiLotem/deeplink

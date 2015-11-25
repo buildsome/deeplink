@@ -19,6 +19,12 @@
 #define DEEPLINK__ADD_LIB(libname)  \
     _DEEPLINK__ADD_LIB(libname)
 
+#define DEEPLINK__PRUNE_OFILE(ofile)  \
+    _DEEPLINK__PRUNE_OFILE(ofile)
+
+#define DEEPLINK__PRUNE_LIB(libname) \
+    _DEEPLINK__PRUNE_LIB(libname)
+
 #include "deeplink_private.h"
 
 #endif

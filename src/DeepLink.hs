@@ -25,7 +25,7 @@ import           Prelude.Compat hiding (FilePath)
 data DeepLinkError
     = MissingElfFile FilePath
     -- ^ The specified ELF (object) file does not exist
-    | ConflictingPruneFile FilePath
+    | ConflictingPrune FilePath
     -- ^ Trying to prune an object file that was already added
     | RedundantPrunes (Set FilePath)
     -- ^ Requested to prune a file that was not asked for by any dependency.
@@ -41,7 +41,7 @@ instance Show DeepLinkError where
         | otherwise =
           "Failed to open file: " ++ show path ++ ". " ++
           "Are you missing a build rule to build it?"
-    show (ConflictingPruneFile path) =
+    show (ConflictingPrune path) =
         "Cannot prune already-added file " ++ show path ++ ". " ++
         "Make sure your prune cmds are the first thing in the target."
     show (RedundantPrunes paths) =
@@ -94,15 +94,15 @@ deepLink :: FilePath -> [FilePath] -> IO [FilePath]
 deepLink cwd opaths =
     do
         alreadyAdded <- newMVar OSet.empty
-        prunedFiles <- newMVar OSet.empty
+        pruned <- newMVar OSet.empty
         alreadyPruned <- newMVar OSet.empty
         let addPruneList oPathRaw =
                 do
                     let oPathRelative = FilePath.canonicalizePathAsRelative cwd oPathRaw
                     -- if the mvar is used concurrenty, this is a race (they are not nested)
                     pruneConflict <- withMVar alreadyAdded $ return . OSet.isMember oPathRelative
-                    when pruneConflict $ E.throwIO $ ConflictingPruneFile oPathRaw
-                    modifyMVar_ prunedFiles $ return . OSet.tryAppend oPathRelative
+                    when pruneConflict $ E.throwIO $ ConflictingPrune oPathRaw
+                    modifyMVar_ pruned $ return . OSet.tryAppend oPathRelative
         let addLinkCmds oPathRelative =
                 do
                     onEachInSection addPruneList "deeplink-prune" oPathRelative
@@ -114,7 +114,7 @@ deepLink cwd opaths =
                   do
                       let oPathRelative = FilePath.canonicalizePathAsRelative cwd oPathRaw
                       fileIsPruned <-
-                          withMVar prunedFiles $ return . OSet.isMember oPathRelative
+                          withMVar pruned $ return . OSet.isMember oPathRelative
                       if fileIsPruned
                           then modifyMVar_ alreadyPruned $ return . OSet.tryAppend oPathRelative
                           else do
@@ -126,7 +126,7 @@ deepLink cwd opaths =
                           unless alreadyMember $ addLinkCmds oPathRelative
         mapM_ addRecursively opaths
         alreadyPrunedSet <- OSet.toSet <$> readMVar alreadyPruned
-        prunedSet <- OSet.toSet <$> readMVar prunedFiles
+        prunedSet <- OSet.toSet <$> readMVar pruned
         let redundantPrunes = prunedSet `Set.difference` alreadyPrunedSet
         unless (Set.null redundantPrunes) $ E.throwIO (RedundantPrunes redundantPrunes)
         sortOn getOrder . OSet.toList <$> readMVar alreadyAdded

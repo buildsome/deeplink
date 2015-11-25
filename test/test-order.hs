@@ -6,6 +6,7 @@ module Main (main) where
 import           Control.Exception (bracket)
 import           Control.Monad (unless)
 import qualified Data.ByteString.Char8 as BS8
+import           Data.List ((\\))
 import           Data.Monoid ((<>))
 import           DeepLink (deepLink)
 import           System.FilePath (takeDirectory, (</>))
@@ -24,6 +25,9 @@ withTempFile template =
 order :: [Int]
 order = [0,5,1,2,3,8,4,9,10,11]
 
+prunes :: [Int]
+prunes = [8, 10]
+
 prog :: String
 prog =
     unlines $
@@ -31,6 +35,9 @@ prog =
     "" :
     [ "DEEPLINK__ADD_LIB(\"" ++ show i ++ "\")"
     | i <- order
+    ] ++
+    [ "DEEPLINK__PRUNE_LIB(\"" ++ show i ++ "\")"
+    | i <- prunes
     ]
 
 main :: IO ()
@@ -39,7 +46,7 @@ main =
     do
         _ <- readProcess "gcc" ["-o", oPath, "-c", "-xc", "-I", myDir </> "../include", "-"] prog
         fileList <- deepLink "." [BS8.pack oPath]
-        let expected = map BS8.pack $ oPath : ["-l" <> show i | i <- order]
+        let expected = map BS8.pack $ oPath : ["-l" <> show i | i <- order \\ prunes]
         let unlinesStr = unlines . map BS8.unpack
         unless (expected == fileList) $
             fail $

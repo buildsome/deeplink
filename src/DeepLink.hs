@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module DeepLink
     ( deepLink
+    , readPrunes
+    , readDeps
     ) where
 
 import           Control.Concurrent.MVar
@@ -80,8 +82,11 @@ readDeepLinkSection sectionName oPath =
             | "-l" `BS8.isPrefixOf` depOPath = depOPath
             | otherwise = FilePath.takeDirectory hPath </> depOPath
 
-onEachInSection :: (FilePath -> IO ()) -> String -> FilePath -> IO ()
-onEachInSection func sectionName oPath = mapM_ func =<< readDeepLinkSection sectionName oPath
+readPrunes :: FilePath -> IO [FilePath]
+readPrunes = readDeepLinkSection "deeplink-prune"
+
+readDeps :: FilePath -> IO [FilePath]
+readDeps = readDeepLinkSection "deeplink-dep"
 
 data Order = File | Lib | SystemLib deriving (Eq, Ord)
 getOrder :: FilePath -> Order
@@ -112,8 +117,8 @@ deepLink cwd args =
                         else act
         let addLinkCmds oPathRelative =
                 do
-                    onEachInSection addPruneList "deeplink-prune" oPathRelative
-                    onEachInSection addDep "deeplink-dep" oPathRelative
+                    readPrunes oPathRelative >>= mapM_ addPruneList
+                    readDeps   oPathRelative >>= mapM_ addDep
             addDep arg
                 | File /= getOrder arg =
                   tryPrune arg $

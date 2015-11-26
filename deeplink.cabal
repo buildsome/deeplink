@@ -43,6 +43,17 @@ executable deeplink
                      , unix
   default-language:    Haskell2010
 
+executable deeplinkread
+  main-is:             ReadOFile.hs
+  ghc-options:         -O2 -Wall
+  default-extensions:  NoImplicitPrelude
+  other-extensions:    CPP
+  build-depends:       base
+                     , base-compat
+                     , bytestring
+                     , deeplink
+  default-language:    Haskell2010
+
 Test-Suite test-foo
   type:                exitcode-stdio-1.0
   ghc-options:         -Wall

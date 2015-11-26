@@ -49,12 +49,14 @@ cp LICENSE $RPM_BUILD_ROOT/%{_prefix}/share/doc/deeplink-0.1.0.0/LICENSE
 
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/bin
 cp .stack-work/install/*/*/*/bin/deeplink $RPM_BUILD_ROOT/%{_prefix}/bin/deeplink
+cp .stack-work/install/*/*/*/bin/deeplinkread $RPM_BUILD_ROOT/%{_prefix}/bin/deeplinkread
 
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/include
 cp include/*.h $RPM_BUILD_ROOT/%{_prefix}/include
 
 %files
 %{_prefix}/bin/deeplink
+%{_prefix}/bin/deeplinkread
 # FIXME: Version needs to be automated here.
 %{_prefix}/share/doc/deeplink-0.1.0.0/LICENSE
 %{_prefix}/include/deeplink_private.h

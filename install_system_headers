@@ -1,0 +1,2 @@
+sudo cp ~/.cabal/include/deeplink.h /usr/local/include
+sudo cp ~/.cabal/include/deeplink_private.h /usr/local/include

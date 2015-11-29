@@ -7,7 +7,7 @@ module DeepLink
 
 import           Control.Concurrent.MVar
 import qualified Control.Exception as E
-import           Control.Monad
+import           Control.Monad (when, unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
 import           Data.Elf (ElfSection(..), Elf(..), parseElf)

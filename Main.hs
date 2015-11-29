@@ -5,10 +5,10 @@
 {-# LANGUAGE CPP #-}
 module Main (main) where
 
-import           Control.Monad
+import           Control.Monad (liftM, when)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
-import           DeepLink
+import qualified DeepLink
 import           Options.Applicative
 import           System.FilePath.ByteString (FilePath)
 import qualified System.Posix.ByteString as Posix
@@ -60,7 +60,7 @@ main = do
   -- setNumCapabilities . (*2) =<< getNumProcessors -- To get full reasonable buildsome parallelism
   Opts ldCommand oPaths verbose <- getOpts
   cwd <- Posix.getWorkingDirectory
-  fullList <- deepLink cwd oPaths
+  fullList <- DeepLink.deepLink cwd oPaths
   let cmd@(cmdExec:cmdArgs) = words ldCommand ++ map BS8.unpack fullList
   when verbose $ putStrLn $ unwords cmd
   callProcess cmdExec cmdArgs

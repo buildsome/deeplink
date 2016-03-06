@@ -8,7 +8,7 @@ import           Control.Monad (unless)
 import qualified Data.ByteString.Char8 as BS8
 import           Data.List ((\\))
 import           Data.Monoid ((<>))
-import           DeepLink (deepLink)
+import           DeepLink (deepLink, DeepLinkResult(..))
 import           System.FilePath (takeDirectory, (</>))
 import           System.IO (Handle, openTempFile, hClose)
 import           System.Process
@@ -45,7 +45,8 @@ main =
     withTempFile "file.o" $ \(oPath, _) ->
     do
         _ <- readProcess "gcc" ["-o", oPath, "-c", "-xc", "-I", myDir </> "../include", "-"] prog
-        fileList <- deepLink "." [BS8.pack oPath]
+        -- TODO: don't ignore deps! check them.
+        DeepLinkResult _deps fileList <- deepLink "." [BS8.pack oPath]
         let expected = map BS8.pack $ oPath : ["-l" <> show i | i <- order \\ prunes]
         let unlinesStr = unlines . map BS8.unpack
         unless (expected == fileList) $

@@ -1,8 +1,10 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, TupleSections #-}
 module DeepLink
     ( deepLink
     , readPrunes
     , readDeps
+    , Dependent(..)
+    , DeepLinkResult(..)
     ) where
 
 import           Control.Concurrent.MVar
@@ -13,6 +15,8 @@ import qualified Data.ByteString.Char8 as BS8
 import           Data.Elf (ElfSection(..), Elf(..), parseElf)
 import           Data.List (sortBy)
 import           Data.Ord (comparing)
+import           Data.Map (Map)
+import qualified Data.Map as Map
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Typeable (Typeable)
@@ -23,6 +27,7 @@ import           System.IO.Error
 import           System.IO.Posix.MMap (unsafeMMapFile)
 
 import           Prelude.Compat hiding (FilePath)
+
 
 data DeepLinkError
     = MissingElfFile FilePath
@@ -95,13 +100,27 @@ getOrder filePath
     | ".a" `BS8.isSuffixOf` filePath = Lib
     | otherwise = File
 
-deepLink :: FilePath -> [ByteString] -> IO [FilePath]
+data Dependent = CmdLine | ObjFile FilePath
+    deriving (Ord, Eq)
+
+mapAppend :: (Ord k, Ord v) => k -> v -> Map k (Set v) -> Map k (Set v)
+mapAppend k v = Map.insertWith mappend k (Set.singleton v)
+
+data DeepLinkResult =
+    DeepLinkResult
+    { resDependencies :: Map Dependent (Set FilePath)
+    , resObjFiles :: [FilePath]
+    }
+
+deepLink :: FilePath -> [ByteString] -> IO DeepLinkResult
 deepLink cwd args =
     do
         alreadyAdded <- newMVar OSet.empty
         requestedPrunes <- newMVar OSet.empty
         actuallyPruned <- newMVar OSet.empty
-        let addPruneList arg =
+        dependencies <- newMVar Map.empty
+        let addPruneList :: FilePath -> IO ()
+            addPruneList arg =
                 do
                     let oPathRelative = FilePath.canonicalizePathAsRelative cwd arg
                     -- if the mvar is used concurrenty, this is a race (they are not nested)
@@ -118,13 +137,15 @@ deepLink cwd args =
         let addLinkCmds oPathRelative =
                 do
                     readPrunes oPathRelative >>= mapM_ addPruneList
-                    readDeps   oPathRelative >>= mapM_ addDep
-            addDep arg
+                    readDeps   oPathRelative >>= mapM_ (addDep $ ObjFile oPathRelative)
+            addDep :: Dependent -> FilePath -> IO ()
+            addDep parent arg
                 | File /= getOrder arg =
-                  tryPrune arg $
-                  modifyMVar_ alreadyAdded $ return . OSet.tryAppend arg
-                | otherwise = addDepFile (FilePath.canonicalizePathAsRelative cwd arg)
-            addDepFile oPathRelative =
+                  tryPrune arg $ do
+                      modifyMVar_ alreadyAdded $ return . OSet.tryAppend arg
+                      modifyMVar_ dependencies $ return . mapAppend parent arg
+                | otherwise = addDepFile parent (FilePath.canonicalizePathAsRelative cwd arg)
+            addDepFile parent oPathRelative =
                 tryPrune oPathRelative $
                 do
                     let add oldSet =
@@ -133,13 +154,18 @@ deepLink cwd args =
                             Nothing -> (oldSet, True)
                             Just newSet -> (newSet, False)
                     alreadyMember <- modifyMVar alreadyAdded add
-                    unless alreadyMember $ addLinkCmds oPathRelative
-        mapM_ addDep args
+                    unless alreadyMember $ do
+                        modifyMVar_ dependencies $ return . mapAppend parent oPathRelative
+                        addLinkCmds oPathRelative
+        mapM_ (addDep CmdLine) args
         actuallyPrunedSet <- OSet.toSet <$> readMVar actuallyPruned
         requestedPrunedSet <- OSet.toSet <$> readMVar requestedPrunes
         let redundantPrunes = requestedPrunedSet `Set.difference` actuallyPrunedSet
         unless (Set.null redundantPrunes) $ E.throwIO (RedundantPrunes redundantPrunes)
-        sortOn getOrder . OSet.toList <$> readMVar alreadyAdded
+        uniqueOFilesSet <- readMVar alreadyAdded
+        let uniqueOFiles = sortOn getOrder $ OSet.toList uniqueOFilesSet
+        deps <- readMVar dependencies
+        return $ DeepLinkResult deps uniqueOFiles
 
 sortOn :: Ord b => (a -> b) -> [a] -> [a]
 sortOn = sortBy . comparing

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- | Deeplink's main module.
 --
 -- Wraps the DeepLink with optparse based option parsing and invokes
@@ -5,10 +6,13 @@
 {-# LANGUAGE CPP #-}
 module Main (main) where
 
-import           Control.Monad (liftM, when)
+import           Control.Monad (liftM, when, unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS8
+import           Data.Foldable (traverse_)
 import qualified DeepLink
+import           DeepLink.Dot (genDot)
+import           DeepLink (DeepLinkResult(..))
 import           Options.Applicative
 import           System.FilePath.ByteString (FilePath)
 import qualified System.Posix.ByteString as Posix
@@ -20,6 +24,8 @@ data Opts = Opts
   { _ldCommand :: String
   , _oPaths :: [FilePath]
   , _verbose :: Bool
+  , _dryRun :: Bool
+  , _generateDot :: Maybe FilePath
   } deriving Show
 
 #ifdef OPTPARSE_OLD_VERSION
@@ -54,14 +60,17 @@ getOpts =
            metavar "ld-command")
       <*> some (argument bytestr (metavar "opaths" <> help "At least one root .o path"))
       <*> switch (long "verbose" <> short 'v' <> help "Verbose mode")
+      <*> switch (long "dry-run" <> short 'd' <> help "Dry run (won't execute the command)")
+      <*> optional (option bytestr (metavar "DOTFILE" <> long "graph" <> short 'g' <> help "Generate dependency graph (in GraphViz dot format)"))
 
 main :: IO ()
 main = do
   -- setNumCapabilities . (*2) =<< getNumProcessors -- To get full reasonable buildsome parallelism
-  Opts ldCommand oPaths verbose <- getOpts
+  Opts ldCommand oPaths verbose dryRun shouldGenDot <- getOpts
   cwd <- Posix.getWorkingDirectory
-  fullList <- DeepLink.deepLink cwd oPaths
+  DeepLinkResult dependencies fullList <- DeepLink.deepLink cwd oPaths
   let cmd@(cmdExec:cmdArgs) = words ldCommand ++ map BS8.unpack fullList
   when verbose $ putStrLn $ unwords cmd
-  callProcess cmdExec cmdArgs
+  unless dryRun $ callProcess cmdExec cmdArgs
+  traverse_ (genDot dependencies) shouldGenDot
   return ()

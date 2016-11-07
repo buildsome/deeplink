@@ -26,6 +26,7 @@ data Opts = Opts
   , _verbose :: Bool
   , _dryRun :: Bool
   , _generateDot :: Maybe FilePath
+  , _substRegex :: Maybe ByteString
   } deriving Show
 
 #ifdef OPTPARSE_OLD_VERSION
@@ -62,13 +63,14 @@ getOpts =
       <*> switch (long "verbose" <> short 'v' <> help "Verbose mode")
       <*> switch (long "dry-run" <> short 'd' <> help "Dry run (won't execute the command)")
       <*> optional (option bytestr (metavar "DOTFILE" <> long "graph" <> short 'g' <> help "Generate dependency graph (in GraphViz dot format)"))
+      <*> optional (option bytestr (metavar "REGEX" <> long "subst-filepaths" <> short 's' <> help "Regular expression to substitute filepaths, in the format: 'source,dest'"))
 
 main :: IO ()
 main = do
   -- setNumCapabilities . (*2) =<< getNumProcessors -- To get full reasonable buildsome parallelism
-  Opts ldCommand oPaths verbose dryRun shouldGenDot <- getOpts
+  Opts ldCommand oPaths verbose dryRun shouldGenDot substRegex <- getOpts
   cwd <- Posix.getWorkingDirectory
-  DeepLinkResult dependencies fullList <- DeepLink.deepLink cwd oPaths
+  DeepLinkResult dependencies fullList <- DeepLink.deepLink substRegex cwd oPaths
   let cmd@(cmdExec:cmdArgs) = words ldCommand ++ map BS8.unpack fullList
   when verbose $ putStrLn $ unwords cmd
   unless dryRun $ callProcess cmdExec cmdArgs

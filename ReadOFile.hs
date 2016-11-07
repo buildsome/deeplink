@@ -18,5 +18,5 @@ main =
         forM_ oPaths $ \oPath ->
             do
                 BS8.putStrLn $ oPath <> ":"
-                readPrunes oPath >>= mapM_ (BS8.putStrLn . ("  prune: " <>))
-                readDeps oPath >>= mapM_ (BS8.putStrLn . ("  dep: " <>))
+                readPrunes Nothing oPath >>= mapM_ (BS8.putStrLn . ("  prune: " <>))
+                readDeps Nothing oPath >>= mapM_ (BS8.putStrLn . ("  dep: " <>))

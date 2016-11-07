@@ -25,6 +25,7 @@ import           System.FilePath.ByteString (FilePath, (</>))
 import qualified System.FilePath.ByteString as FilePath
 import           System.IO.Error
 import           System.IO.Posix.MMap (unsafeMMapFile)
+import           Text.Regex.PCRE.ByteString.Utils (substituteCompile')
 
 import           Prelude.Compat hiding (FilePath)
 
@@ -76,22 +77,31 @@ pairs [] = []
 pairs [_] = error "Uneven number split into pairs?"
 pairs (x:y:xs) = (x, y) : pairs xs
 
-readDeepLinkSection :: String -> FilePath -> IO [FilePath]
-readDeepLinkSection sectionName oPath =
+
+doSubst :: Maybe ByteString ->  ByteString -> ByteString
+doSubst Nothing      str = str
+doSubst (Just regex) str =
+    case substituteCompile' src str dst of
+        Left err -> error err
+        Right res -> res
+    where [src, dst] = BS8.split ',' regex
+
+readDeepLinkSection :: Maybe ByteString -> String -> FilePath -> IO [FilePath]
+readDeepLinkSection substRegex sectionName oPath =
     do
         deepLinkSectionStr <- readElfSection sectionName oPath
         let cmds = pairs $ filter (not . BS8.null) $ BS8.split '\0' deepLinkSectionStr
-        return $ map f cmds
+        return $ map (doSubst substRegex) $ map f cmds
     where
         f (hPath, depOPath)
             | "-l" `BS8.isPrefixOf` depOPath = depOPath
             | otherwise = FilePath.takeDirectory hPath </> depOPath
 
-readPrunes :: FilePath -> IO [FilePath]
-readPrunes = readDeepLinkSection "deeplink-prune"
+readPrunes :: Maybe ByteString -> FilePath -> IO [FilePath]
+readPrunes s = readDeepLinkSection s "deeplink-prune"
 
-readDeps :: FilePath -> IO [FilePath]
-readDeps = readDeepLinkSection "deeplink-dep"
+readDeps :: Maybe ByteString -> FilePath -> IO [FilePath]
+readDeps s = readDeepLinkSection s "deeplink-dep"
 
 data Order = File | Lib | SystemLib deriving (Eq, Ord)
 getOrder :: FilePath -> Order
@@ -112,9 +122,10 @@ data DeepLinkResult =
     , resObjFiles :: [FilePath]
     }
 
-deepLink :: FilePath -> [ByteString] -> IO DeepLinkResult
-deepLink cwd args =
+deepLink :: Maybe ByteString -> FilePath -> [ByteString] -> IO DeepLinkResult
+deepLink substRegex cwd origArgs =
     do
+        let args = map (doSubst substRegex) origArgs
         alreadyAdded <- newMVar OSet.empty
         requestedPrunes <- newMVar OSet.empty
         actuallyPruned <- newMVar OSet.empty
@@ -136,8 +147,8 @@ deepLink cwd args =
                         else act
         let addLinkCmds oPathRelative =
                 do
-                    readPrunes oPathRelative >>= mapM_ addPruneList
-                    readDeps   oPathRelative >>= mapM_ (addDep $ ObjFile oPathRelative)
+                    readPrunes substRegex oPathRelative >>= mapM_ addPruneList
+                    readDeps   substRegex oPathRelative >>= mapM_ (addDep $ ObjFile oPathRelative)
             addDep :: Dependent -> FilePath -> IO ()
             addDep parent arg
                 | File /= getOrder arg =

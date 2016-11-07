@@ -46,7 +46,7 @@ main =
     do
         _ <- readProcess "gcc" ["-o", oPath, "-c", "-xc", "-I", myDir </> "../include", "-"] prog
         -- TODO: don't ignore deps! check them.
-        DeepLinkResult _deps fileList <- deepLink "." [BS8.pack oPath]
+        DeepLinkResult _deps fileList <- deepLink Nothing "." [BS8.pack oPath]
         let expected = map BS8.pack $ oPath : ["-l" <> show i | i <- order \\ prunes]
         let unlinesStr = unlines . map BS8.unpack
         unless (expected == fileList) $

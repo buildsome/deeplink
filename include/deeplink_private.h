@@ -1,15 +1,13 @@
 /* Included only from deeplink.h, no header protector needed */
 
-#ifndef CONCAT
-#define CONCAT_(A, B) A ## B
-#define CONCAT(A,B) CONCAT_(A,B)
-#endif
+#define _DEEPLINK_CONCAT_(A, B) A ## B
+#define _DEEPLINK_CONCAT(A,B) _DEEPLINK_CONCAT_(A,B)
 
 #define _DEEPLINK__ADD(section_name, ofile)             \
     static struct {                                     \
         char file[sizeof __FILE__];                     \
         char dependency[sizeof ofile];                  \
-    } CONCAT(deeplink, __COUNTER__)                     \
+    } _DEEPLINK_CONCAT(deeplink, __COUNTER__)           \
     __attribute__ ((used, section(section_name))) =     \
     { __FILE__, (ofile) };
 
